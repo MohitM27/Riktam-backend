@@ -3,8 +3,12 @@ const User = require("../models/user");
 
 exports.getAllGroups = async (req, res) => {
   try {
-    const groups = await Group.find();
-    res.json(groups);
+    const groups = await Group.find({
+      members: {
+        $in: [req.user.id],
+      },
+    });
+    res.status(200).json(groups);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -16,7 +20,7 @@ exports.getGroupById = async (req, res) => {
     if (!group) {
       return res.status(404).json({ message: "Group not found" });
     }
-    res.json(group);
+    res.status(200).json(group);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -40,7 +44,7 @@ exports.createGroup = async (req, res) => {
     const newGroup = await Group.create({ name, members });
     res.status(201).json(newGroup);
   } catch (error) {
-    console.log("error", error)
+    console.log("error", error);
     res.status(400).json({ message: error.message });
   }
 };

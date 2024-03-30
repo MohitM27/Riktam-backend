@@ -1,3 +1,4 @@
+const moment = require("moment");
 const Message = require("../models/message");
 
 exports.getMessagesByGroup = async (req, res) => {
@@ -7,8 +8,21 @@ exports.getMessagesByGroup = async (req, res) => {
     if (!groupId.match(/^[0-9a-fA-F]{24}$/)) {
       return res.status(400).json({ message: "Invalid group ID" });
     }
-    const messages = await Message.find({ group: groupId });
-    res.json(messages);
+    const messages = await Message.find({ group: groupId }).populate("author");
+    const result = messages.map((el) => {
+      console.log("el.likes", el.likes);
+      console.log("req.user.id", req.user.id);
+      return {
+        ...el._doc, // Spread the existing message document
+        userMessage: el.author.id.toString() === req.user.id, // Check if the author is the current user
+        createdAt: moment(el.createdAt).format('LL'), // Format the createdAt field
+        liked: el.likes.includes(req.user.id), // Check if the current user has liked the message
+        userName : el.author.name,
+        author:el.author.id
+      };
+    });
+    
+    res.json(result);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
